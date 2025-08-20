@@ -12,23 +12,30 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class BookController extends AbstractController
 {
     #[Route('/api/books', name: 'book', methods: ['GET'])]
-    public function getAllBooks(
-        BookRepository $bookRepository,
-        SerializerInterface $serializer
-    ): JsonResponse {
-        $bookList = $bookRepository->findAll();
-        $jsonBookList = $serializer->serialize(
-            $bookList,
-            'json',
-            ['groups' => 'getBooks']
-        );
+    public function getAllBooks( BookRepository $bookRepository, SerializerInterface $serializer, Request $rq, TagAwareCacheInterface $cachePool): JsonResponse {
+        
+        // mise en place de de la pagination, si aucune limite imposé, on met 1 page et 3 artcle de base
+        $page = $rq->get('page', 1);
+        $limit = $rq->get('limit', 3);
+
+        // mise en place d'un id de cache
+        $idCache = "getEllBooks-" . $page . "-" . $limit;
+        $jsonBookList = $cachePool->get($idCache, function(ItemInterface $item) use ($bookRepository, $page, $limit, $serializer){
+            $item->tag("booksCache");
+            $bookList = $bookRepository->findAllWithPagination($page, $limit);
+            return $serializer->serialize($bookList, 'json', ['groups'=> 'getBooks']);
+        });
+        
         return new JsonResponse(
             $jsonBookList,
             Response::HTTP_OK,
@@ -63,6 +70,7 @@ final class BookController extends AbstractController
     }
 
     #[Route('/api/books', name: 'createBook', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN', message: 'Vous n\'avez pas les droit suffisants pour créer un livre')]
     public function createBook(Request $rq, EntityManagerInterface $em, UrlGeneratorInterface $urlGenerator, SerializerInterface $serializer, AuthorRepository $authorRepository, ValidatorInterface $valid): JsonResponse {
         $book = $serializer->deserialize($rq->getContent(), Book::class, 'json');
 
@@ -100,4 +108,6 @@ final class BookController extends AbstractController
         
         return new JsonResponse(null, JsonResponse::HTTP_NO_CONTENT);
     }
+
+    
 }
