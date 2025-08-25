@@ -6,6 +6,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 
 class VersioningService{
     private $requestStack;
+    private string $defaultVersion;
 
     public function __construct(RequestStack $rq, ParameterBagInterface $params)
     {
@@ -17,7 +18,7 @@ class VersioningService{
         $version = $this->defaultVersion;
 
         $request = $this->requestStack->getCurrentRequest();
-        $accept = $request->headers->get('Accept');
+        $accept = $request?->headers->get('Accept');
 
         $entete = explode(';', $accept);
 

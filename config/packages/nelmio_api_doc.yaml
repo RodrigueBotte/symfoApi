@@ -4,27 +4,27 @@ nelmio_api_doc:
             title: Books
             description: Une api sur des livres et ses auteurs
             version: 2.0.0
-paths:
-    /api/login_check:
-        post:
-        operationId: postCredentialsItem
-        tags:
-            - Token
-        summary: Permet d'obtenir le token JWT pour se logger.
-        requestBody:
-            description: Crée un nouveau token JWT
-            content:
-                application/json:
-                    schema:
-                        $ref:
-                            '#/components/schemas/Credentials'
-        responses:
-            '200':
-                description: Récupère le token JWT
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/Token'
+        paths:
+            /api/login_check:
+                post:
+                    operationId: postCredentialsItem
+                    tags:
+                        - Token
+                    summary: Permet d'obtenir le token JWT pour se logger.
+                    requestBody:
+                        description: Crée un nouveau token JWT
+                        content:
+                            application/json:
+                                schema:
+                                    $ref:
+                                        '#/components/schemas/Credentials'
+                    responses:
+                        '200':
+                            description: Récupère le token JWT
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/Token'
         components:
             schemas:
                 Token:
